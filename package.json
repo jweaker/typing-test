@@ -1,8 +1,9 @@
 {
-  "name": "typing-test",
+  "name": "jtype",
   "private": true,
   "version": "0.0.0",
   "main": "src/index.js",
+  "productName": "jtype",
   "scripts": {
     "start": "npm run build && yarn electron:start",
     "dev": "concurrently -k \"vite\" \"yarn electron:dev\"",
@@ -16,6 +17,10 @@
     "postinstall": "electron-builder install-app-deps"
   },
   "dependencies": {
+    "@emotion/react": "^11.8.2",
+    "@emotion/styled": "^11.8.1",
+    "@mui/material": "^5.5.2",
+    "@mui/styles": "^5.5.1",
     "electron-squirrel-startup": "^1.0.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
@@ -37,16 +42,27 @@
     "eslint-config-react-app": "^7.0.0",
     "vite": "^2.8.0"
   },
+  "favicon": "./src/assets/icon.ico",
   "description": "typing test",
-  "license": "UNLICENSED",
+  "license": "MIT",
+  "electronPackagerConfig": {
+    "icon": "src/assets/icon.ico"
+  },
   "config": {
     "forge": {
-      "packagerConfig": {},
+      "name": "jtype",
+      "packagerConfig": {
+        "icon": "src/assets/icon.ico"
+      },
       "makers": [
         {
           "name": "@electron-forge/maker-squirrel",
           "config": {
-            "name": "jpos"
+            "name": "jtype",
+            "authors": "jweaker",
+            "icon": "src/assets/icon.ico",
+            "iconUrl": "https://iconarchive.com/download/i107835/google/noto-emoji-objects/62829-keyboard.ico",
+            "exe": "jtype.exe"
           }
         },
         {
@@ -57,7 +73,14 @@
         },
         {
           "name": "@electron-forge/maker-deb",
-          "config": {}
+          "config": {
+            "options": {
+              "bin": "jtype",
+              "icon": "src/assets/icon.ico",
+              "maintainer": "jweaker",
+              "homepage": "https://github.com/jweaker/typing-test"
+            }
+          }
         },
         {
           "name": "@electron-forge/maker-rpm",

@@ -1,3 +1,5 @@
+import { Slider, TextField } from "@mui/material";
+import { withStyles } from "@mui/styles";
 import React, { useState, useEffect, useRef } from "react";
 import { WORDS } from "../config/WORDS";
 import "./Home.css";
@@ -9,8 +11,12 @@ export default function Home() {
   const [typedLog, setTypedLog] = useState([]);
   const [timer, setTimer] = useState(0);
   const [finished, setFinished] = useState(false);
+  const [settings, setSettings] = useState(false);
+  const [opacity, setOpacity] = useState(60);
+  const [wordNum, setWordNum] = useState(60);
   const [wpm, setWpm] = useState();
-  const [accuracy, setAccuracy] = useState();
+  let mopacity = opacity;
+  let mwordNum = wordNum;
   const inputRef = useRef();
   const handleKeyPress = (e) => {
     switch (e.key) {
@@ -19,6 +25,12 @@ export default function Home() {
         break;
       case "Tab":
         restart();
+        break;
+      case "Escape":
+        restart();
+        setOpacity(mopacity);
+        setWordNum(mwordNum);
+        setSettings((p) => !p);
         break;
       default:
         break;
@@ -30,7 +42,7 @@ export default function Home() {
     setTimerInteraval();
     const mWords = WORDS.split(" ")
       .sort(() => Math.random() - 0.5)
-      .splice(0, 60);
+      .splice(0, wordNum);
     setText(mWords);
     setTypedLog(mWords.map((e, i) => e.split("").map(() => 0)));
     setValue("");
@@ -48,25 +60,38 @@ export default function Home() {
       setWordIndex(wordIndex - 1);
       setLetterIndex(typedLog[wordIndex - 1].filter((v) => v !== 0).length);
     }
-    if (typedLog[wordIndex][letterIndex - 1] === 3)
+    if (typedLog[wordIndex][letterIndex - 1] === 3) {
       setText((e) => [
         ...e.filter((v, i) => i < wordIndex),
         e[wordIndex].slice(0, letterIndex - 1),
         ...e.filter((v, i) => i > wordIndex),
       ]);
-    setTypedLog((e) => [
-      ...e.filter((v, i) => i < wordIndex),
-      [
-        ...e
-          .filter((v, i) => i === wordIndex)[0]
-          .filter((v, i) => i < letterIndex),
-        0,
-        ...e
-          .filter((v, i) => i === wordIndex)[0]
-          .filter((v, i) => i > letterIndex),
-      ],
-      ...e.filter((v, i) => i > wordIndex),
-    ]);
+      setTypedLog((e) => [
+        ...e.filter((v, i) => i < wordIndex),
+        [
+          ...e
+            .filter((v, i) => i === wordIndex)[0]
+            .filter((v, i) => i < letterIndex - 1),
+          ...e
+            .filter((v, i) => i === wordIndex)[0]
+            .filter((v, i) => i > letterIndex - 1),
+        ],
+        ...e.filter((v, i) => i > wordIndex),
+      ]);
+    } else
+      setTypedLog((e) => [
+        ...e.filter((v, i) => i < wordIndex),
+        [
+          ...e
+            .filter((v, i) => i === wordIndex)[0]
+            .filter((v, i) => i < letterIndex - 1),
+          0,
+          ...e
+            .filter((v, i) => i === wordIndex)[0]
+            .filter((v, i) => i > letterIndex - 1),
+        ],
+        ...e.filter((v, i) => i > wordIndex),
+      ]);
   };
   const finish = (correct) => {
     const mtypeLog = correct
@@ -80,13 +105,10 @@ export default function Home() {
           ],
         ]
       : typedLog;
+
     const correctWords = mtypeLog.filter(
-      (word) => word.filter((letter) => letter === 1).length === word.length
-    );
-    const letters = mtypeLog.reduce((acc, word) => [...acc, ...word]);
-    const correctLetters = letters.filter((letter) => letter === 1);
-    setAccuracy(
-      Math.round((correctLetters.length / letters.length) * 10000) / 100
+      (word, i) =>
+        word.filter((letter) => letter === 1).length === text[i].length
     );
     setWpm(Math.round((correctWords.length / timer) * 6000) / 100);
     setFinished(true);
@@ -180,31 +202,71 @@ export default function Home() {
   useEffect(() => {
     const mWords = WORDS.split(" ")
       .sort(() => Math.random() - 0.5)
-      .splice(0, 60);
+      .splice(0, wordNum);
     setText(mWords);
     setTypedLog(mWords.map((e, i) => e.split("").map(() => 0)));
     inputRef.current?.focus();
-  }, []);
+  }, [wordNum]);
+
+  const changeOpacity = (v) => {
+    mopacity = v;
+    document.body.style.backgroundColor = `rgba(36, 36, 36, ${v / 100})`;
+  };
+  const changeWordNum = (v) => {
+    mwordNum = v;
+  };
+  const CustomSlider = withStyles({
+    track: {
+      color: "gray",
+    },
+    thumb: {
+      color: "gray",
+    },
+  })(Slider);
+  if (!settings) inputRef.current?.focus();
   return (
-    <div className="Home">
+    <div className="Home" onKeyDown={handleKeyPress}>
       <input
         type="text"
         className="text-input"
         value={value}
         onChange={onType}
         ref={inputRef}
-        onKeyDown={handleKeyPress}
       />
-      {finished ? (
+      {settings ? (
+        <div className="settings">
+          <div className="settings-item">
+            <span className="settings-text">opacity</span>
+            <CustomSlider
+              defaultValue={opacity}
+              valueLabelDisplay="auto"
+              onChange={(e) => changeOpacity(e.target.value)}
+            />
+          </div>
+          <div className="settings-item">
+            <span className="settings-text">words</span>
+            <CustomSlider
+              defaultValue={wordNum}
+              max={200}
+              step={5}
+              valueLabelDisplay="auto"
+              onChange={(e) => changeWordNum(e.target.value)}
+            />
+          </div>
+        </div>
+      ) : finished ? (
         <>
           <span className="timer">{wpm} WPM</span>
-          <span className="timer">{accuracy} Acc</span>
           <span>press TAB to restart</span>
+          <span>press Esc to change the settings</span>
         </>
       ) : (
         <>
           <span className="timer">{timer}</span>
-          <div className="word-container">
+          <div
+            className="word-container"
+            onClick={() => inputRef.current?.focus()}
+          >
             {text.map((word, wordI) => (
               <>
                 <span
